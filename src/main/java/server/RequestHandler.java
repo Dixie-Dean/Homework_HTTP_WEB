@@ -29,15 +29,39 @@ public class RequestHandler implements Runnable {
         }
     }
 
-    public void handleRequest() throws IOException {
+    private void handleRequest() throws IOException {
         final var requestLine = in.readLine();
         final var parts = requestLine.split(" ");
-
-        if (parts.length != 3) {
-            disconnect(socket, in, out);
-        }
+        checkRequestLineLength(parts);
 
         final var path = parts[1];
+        checkPathValidity(path);
+
+        final var filePath = Path.of(".", "public", path);
+        final var mimeType = Files.probeContentType(filePath);
+        if (path.equals("/classic.html")) {
+            responseForClassic(filePath, mimeType);
+        } else {
+            response(filePath, mimeType);
+        }
+    }
+
+    private void checkRequestLineLength(String[] parts) throws IOException {
+        if (parts.length != 3) {
+            out.write((
+                    """
+                            HTTP/1.1 400 Bad Request\r
+                            Content-Length: 0\r
+                            Connection: close\r
+                            \r
+                            """
+                    ).getBytes());
+            out.flush();
+            disconnect(socket, in, out);
+        }
+    }
+
+    private void checkPathValidity(String path) throws IOException {
         if (!Server.getValidPaths().contains(path)) {
             out.write((
                     """
@@ -50,29 +74,23 @@ public class RequestHandler implements Runnable {
             out.flush();
             disconnect(socket, in, out);
         }
+    }
 
-        final var filePath = Path.of(".", "public", path);
-        final var mimeType = Files.probeContentType(filePath);
+    private void responseForClassic(Path filePath, String mimeType) throws IOException {
+        final var template = Files.readString(filePath);
+        final var content = template.replace("{time}", LocalDateTime.now().toString()).getBytes();
+        out.write((
+                "HTTP/1.1 200 OK\r\n" +
+                        "Content-Type: " + mimeType + "\r\n" +
+                        "Content-Length: " + content.length + "\r\n" +
+                        "Connection: close\r\n" +
+                        "\r\n"
+        ).getBytes());
+        out.write(content);
+        out.flush();
+    }
 
-        // special case for classic
-        if (path.equals("/classic.html")) {
-            final var template = Files.readString(filePath);
-            final var content = template.replace(
-                    "{time}",
-                    LocalDateTime.now().toString()
-            ).getBytes();
-            out.write((
-                    "HTTP/1.1 200 OK\r\n" +
-                            "Content-Type: " + mimeType + "\r\n" +
-                            "Content-Length: " + content.length + "\r\n" +
-                            "Connection: close\r\n" +
-                            "\r\n"
-            ).getBytes());
-            out.write(content);
-            out.flush();
-            disconnect(socket, in, out);
-        }
-
+    private void response(Path filePath, String mimeType) throws IOException {
         final var length = Files.size(filePath);
         out.write((
                 "HTTP/1.1 200 OK\r\n" +
