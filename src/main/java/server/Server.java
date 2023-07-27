@@ -10,10 +10,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Server {
-//    private static final List<String> validPaths = List.of("/index.html",
-//            "/spring.svg", "/spring.png", "/resources.html", "/styles.css", "/app.js",
-//            "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
-
     private static ConcurrentHashMap<HashMap<String, String>, Handler> handlers;
     private final Executor threadPool;
 

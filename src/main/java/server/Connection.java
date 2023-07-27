@@ -31,22 +31,14 @@ public class Connection implements Runnable {
 
     private void handleRequest() throws IOException {
         final var requestLine = inputStream.readLine();
-        System.out.println(requestLine); //todo DELETE THIS LINE
         final var parts = requestLine.split(" ");
         checkRequestLineLength(parts);
 
-        final var request = new Request(parts[0], parts[1], parts[2]);
+        final var request = new Request(parts[0], parts[1]);
         Handler handler = Server.getHandlers().get(request.getKey());
-        handler.handle(request, outputStream);
-
-
-//        final var filePath = Path.of(".", "public", path);
-//        final var mimeType = Files.probeContentType(filePath);
-//        if (path.equals("/classic.html")) {
-//            responseForClassic(filePath, mimeType);
-//        } else {
-//            response(filePath, mimeType);
-//        }
+        if (handler != null) {
+            handler.handle(request, outputStream);
+        }
     }
 
     private void checkRequestLineLength(String[] parts) throws IOException {
@@ -63,48 +55,6 @@ public class Connection implements Runnable {
             disconnect(socket, inputStream, outputStream);
         }
     }
-
-//    private void checkPathValidity(String path) throws IOException {
-//        if (!Server.getValidPaths().contains(path)) {
-//            outputStream.write((
-//                    """
-//                            HTTP/1.1 404 Not Found\r
-//                            Content-Length: 0\r
-//                            Connection: close\r
-//                            \r
-//                            """
-//            ).getBytes());
-//            outputStream.flush();
-//            disconnect(socket, inputStream, outputStream);
-//        }
-//    }
-
-//    private void responseForClassic(Path filePath, String mimeType) throws IOException {
-//        final var template = Files.readString(filePath);
-//        final var content = template.replace("{time}", LocalDateTime.now().toString()).getBytes();
-//        outputStream.write((
-//                "HTTP/1.1 200 OK\r\n" +
-//                        "Content-Type: " + mimeType + "\r\n" +
-//                        "Content-Length: " + content.length + "\r\n" +
-//                        "Connection: close\r\n" +
-//                        "\r\n"
-//        ).getBytes());
-//        outputStream.write(content);
-//        outputStream.flush();
-//    }
-
-//    private void response(Path filePath, String mimeType) throws IOException {
-//        final var length = Files.size(filePath);
-//        outputStream.write((
-//                "HTTP/1.1 200 OK\r\n" +
-//                        "Content-Type: " + mimeType + "\r\n" +
-//                        "Content-Length: " + length + "\r\n" +
-//                        "Connection: close\r\n" +
-//                        "\r\n"
-//        ).getBytes());
-//        Files.copy(filePath, outputStream);
-//        outputStream.flush();
-//    }
 
     private void disconnect(Socket socket, BufferedReader in, BufferedOutputStream out) {
         try {
