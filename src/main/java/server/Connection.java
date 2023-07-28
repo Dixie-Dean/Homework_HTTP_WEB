@@ -22,10 +22,10 @@ public class Connection implements Runnable {
 
     @Override
     public void run() {
-        try {
+        try (socket; inputStream; outputStream){
             handleRequest();
-        } catch (IOException e) {
-            disconnect(socket, inputStream, outputStream);
+        } catch (IOException exception) {
+            exception.printStackTrace();
         }
     }
 
