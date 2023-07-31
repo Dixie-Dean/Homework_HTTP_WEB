@@ -12,7 +12,7 @@ public class RequestBuilder {
     public static final String POST = "POST";
     private static final List<String> allowedMethods = List.of(GET, POST);
 
-    public static Request build(BufferedInputStream in, BufferedOutputStream out) throws IOException {
+    public static synchronized Request build(BufferedInputStream in, BufferedOutputStream out) throws IOException {
         final var limit = 4096;
         in.mark(limit);
         final var buffer = new byte[limit];
@@ -38,14 +38,13 @@ public class RequestBuilder {
             badRequest(out);
             return null;
         }
-        System.out.println(method);
 
         final var path = requestLine[1];
         if (!path.startsWith("/")) {
             badRequest(out);
             return null;
         }
-        System.out.println(path);
+
 
         // ищем заголовки
         final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
@@ -63,7 +62,6 @@ public class RequestBuilder {
 
         final var headersBytes = in.readNBytes(headersEnd - headersStart);
         final var headers = Arrays.asList(new String(headersBytes).split("\r\n"));
-        System.out.println(headers);
 
         // для GET тела нет
         String body = null;
@@ -76,19 +74,18 @@ public class RequestBuilder {
                 final var bodyBytes = in.readNBytes(length);
 
                 body = new String(bodyBytes);
-                System.out.println(body);
             }
         }
 
-//        out.write((
-//                """
-//                        HTTP/1.1 200 OK\r
-//                        Content-Length: 0\r
-//                        Connection: close\r
-//                        \r
-//                        """
-//        ).getBytes());
-//        out.flush();
+        if (path.equals("/favicon.ico")) {
+            return null;
+        }
+        System.out.println(method);
+        System.out.println(path);
+        System.out.println(headers);
+        if (body != null) {
+            System.out.println(body);
+        }
 
         return new Request(method, path, headers, body);
     }

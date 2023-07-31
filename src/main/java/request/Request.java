@@ -22,6 +22,10 @@ public class Request {
         return path;
     }
 
+    public String getBody() {
+        return body;
+    }
+
     public HashMap<String, String> getKey() {
         return key;
     }
