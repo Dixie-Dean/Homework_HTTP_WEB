@@ -64,6 +64,36 @@ public class Main {
             responseStream.flush();
         }));
 
+        server.addHandler("POST", "/default-get.html", ((request, responseStream) -> {
+            final var filePath = Path.of(".", "static", request.getPath());
+            final var mimeType = Files.probeContentType(filePath);
+            final var length = Files.size(filePath);
+            responseStream.write(("HTTP/1.1 200 OK\r\n" +
+                    "Content-Type: " + mimeType + "\r\n" +
+                    "Content-Length: " + length + "\r\n" +
+                    "Connection: close\r\n" +
+                    "\r\n" +
+                    request.getBody()
+            ).getBytes());
+            Files.copy(filePath, responseStream);
+            responseStream.flush();
+        }));
+
+//        server.addHandler("GET", "/default-get.html?value1=FFF", ((request, responseStream) -> {
+//            final var filePath = Path.of(".", "static", request.getPath());
+//            final var mimeType = Files.probeContentType(filePath);
+//            final var length = Files.size(filePath);
+//            responseStream.write(("HTTP/1.1 200 OK\r\n" +
+//                    "Content-Type: " + mimeType + "\r\n" +
+//                    "Content-Length: " + length + "\r\n" +
+//                    "Connection: close\r\n" +
+//                    "\r\n"
+//                    request.getBody()
+//            ).getBytes());
+//            Files.copy(filePath, responseStream);
+//            responseStream.flush();
+//        }));
+
         server.launch(9999);
     }
 }

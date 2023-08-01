@@ -131,12 +131,12 @@ public class RequestBuilder {
         if (path.equals("/favicon.ico")) {
             return;
         }
-        System.out.println("Method: " + method);
-        System.out.println("Path: " + path);
-        System.out.println("Params: " + params);
-        System.out.println("Headers: " + headers);
+        System.out.println(method);
+        System.out.println(path);
+        System.out.println(params);
+        System.out.println(headers);
         if (body != null) {
-            System.out.println("Body: " + body);
+            System.out.println(body);
         }
         System.out.println();
     }
