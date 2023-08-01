@@ -32,14 +32,7 @@ public class Connection implements Runnable {
     private void handleRequest() throws IOException {
         Request request = RequestBuilder.build(inputStream, outputStream);
         if (request != null) {
-
-            String path = request.getPath();
-            if (path.contains("?")) {
-                path = path.substring(0, path.indexOf('?'));
-            }
-            String key = request.getMethod() + "=" + path;
-            Handler handler = Server.getHandlers().get(key);
-
+            Handler handler = Server.getHandlers().get(request.getKey());
             if (handler != null) {
                 handler.handle(request, outputStream);
             }

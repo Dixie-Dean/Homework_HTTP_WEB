@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -89,6 +90,7 @@ public class RequestBuilder {
                 body = new String(bodyBytes);
             }
         }
+
 
         log(method, path, params, headers, body);
         return new Request(method, path, params, headers, body);

@@ -2,12 +2,13 @@ package request;
 
 import org.apache.http.NameValuePair;
 
-import java.util.HashMap;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class Request {
     private final String method;
-    private final String path;
+    private String path;
     private final List<String> headers;
     private final String body;
     private final List<NameValuePair> params;
@@ -33,7 +34,18 @@ public class Request {
     }
 
     public String getPath() {
-        return path;
+        if (path.contains("?")) {
+            String pathWithoutParams = path.substring(0, path.indexOf('?'));
+            String paramsToEncode = path.substring(path.lastIndexOf('?'));
+            URLEncoder.encode(paramsToEncode, StandardCharsets.UTF_8);
+            return pathWithoutParams + paramsToEncode;
+        } else {
+            return path;
+        }
+    }
+
+    public String getKey() {
+        return getMethod() + "=" + getPath();
     }
 
     public List<String> getHeaders() {
