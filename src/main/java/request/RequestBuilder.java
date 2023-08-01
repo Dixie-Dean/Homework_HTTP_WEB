@@ -1,8 +1,14 @@
 package request;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +51,13 @@ public class RequestBuilder {
             return null;
         }
 
+        final List<NameValuePair> params;
+        try {
+            params = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return null;
+        }
 
         // ищем заголовки
         final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
@@ -77,17 +90,8 @@ public class RequestBuilder {
             }
         }
 
-        if (path.equals("/favicon.ico")) {
-            return null;
-        }
-        System.out.println(method);
-        System.out.println(path);
-        System.out.println(headers);
-        if (body != null) {
-            System.out.println(body);
-        }
-
-        return new Request(method, path, headers, body);
+        log(method, path, params, headers, body);
+        return new Request(method, path, params, headers, body);
     }
 
     private static Optional<String> extractHeader(List<String> headers, String header) {
@@ -121,5 +125,19 @@ public class RequestBuilder {
             return i;
         }
         return -1;
+    }
+
+    private static void log(String method, String path, List<NameValuePair> params, List<String> headers, String body) {
+        if (path.equals("/favicon.ico")) {
+            return;
+        }
+        System.out.println("Method: " + method);
+        System.out.println("Path: " + path);
+        System.out.println("Params: " + params);
+        System.out.println("Headers: " + headers);
+        if (body != null) {
+            System.out.println("Body: " + body);
+        }
+        System.out.println();
     }
 }
