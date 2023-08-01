@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Server {
-    private static ConcurrentHashMap<HashMap<String, String>, Handler> handlers;
+    private static ConcurrentHashMap<String, Handler> handlers;
     private final Executor threadPool;
 
     public Server() {
@@ -18,7 +18,7 @@ public class Server {
         handlers = new ConcurrentHashMap<>();
     }
 
-    protected static ConcurrentHashMap<HashMap<String, String>, Handler> getHandlers() {
+    protected static ConcurrentHashMap<String, Handler> getHandlers() {
         return handlers;
     }
 
@@ -35,8 +35,7 @@ public class Server {
     }
 
     public void addHandler(String method, String path, Handler handler) {
-        HashMap<String, String> auxiliaryMap = new HashMap<>();
-        auxiliaryMap.put(method, path);
-        handlers.put(auxiliaryMap, handler);
+        String key = method + "=" + path;
+        handlers.put(key, handler);
     }
 }

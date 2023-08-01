@@ -10,7 +10,6 @@ public class Request {
     private final String path;
     private final List<String> headers;
     private final String body;
-    private final HashMap<String, String> key = new HashMap<>();
     private final List<NameValuePair> params;
 
     public Request(String method, String path, List<NameValuePair> params, List<String> headers, String body) {
@@ -19,7 +18,6 @@ public class Request {
         this.params = params;
         this.headers = headers;
         this.body = body;
-        this.key.put(method, path);
     }
 
     public List<NameValuePair> getQueryParams() {
@@ -44,9 +42,5 @@ public class Request {
 
     public String getBody() {
         return body;
-    }
-
-    public HashMap<String, String> getKey() {
-        return key;
     }
 }
