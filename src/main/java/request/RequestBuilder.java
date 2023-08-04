@@ -91,9 +91,9 @@ public class RequestBuilder {
             }
         }
 
-
-        log(method, path, params, headers, body);
-        return new Request(method, path, params, headers, body);
+        Request request = new Request(method, path, params, headers, body);
+        log(request);
+        return request;
     }
 
     private static Optional<String> extractHeader(List<String> headers, String header) {
@@ -129,17 +129,21 @@ public class RequestBuilder {
         return -1;
     }
 
-    private static void log(String method, String path, List<NameValuePair> params, List<String> headers, String body) {
-        if (path.equals("/favicon.ico")) {
+    private static void log(Request request) {
+        if (request.getPath().equals("/favicon.ico")) {
             return;
         }
-        System.out.println(method);
-        System.out.println(path);
-        System.out.println(params);
-        System.out.println(headers);
-        if (body != null) {
-            System.out.println(body);
-        }
+
+        System.out.println("Method: " + request.getMethod());
+
+        System.out.println("Path: " + request.getPath());
+
+        System.out.println("Query Params: " + request.getQueryParams());
+
+        System.out.println("Headers: " + request.getHeaders());
+
+        System.out.println("Body: \n" + request.getBody());
+
         System.out.println();
     }
 }
