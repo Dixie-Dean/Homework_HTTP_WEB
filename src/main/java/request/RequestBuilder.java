@@ -8,11 +8,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class RequestBuilder {
     public static final String GET = "GET";
@@ -52,9 +51,9 @@ public class RequestBuilder {
             return null;
         }
 
-        final List<NameValuePair> params;
+        final List<NameValuePair> queryParams;
         try {
-            params = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
+            queryParams = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return null;
@@ -77,21 +76,23 @@ public class RequestBuilder {
         final var headersBytes = in.readNBytes(headersEnd - headersStart);
         final var headers = Arrays.asList(new String(headersBytes).split("\r\n"));
 
-        // для GET тела нет
         String body = null;
         if (!method.equals("GET")) {
             in.skip(headersDelimiter.length);
-            // вычитываем Content-Length, чтобы прочитать body
             final var contentLength = extractHeader(headers, "Content-Length");
             if (contentLength.isPresent()) {
                 final var length = Integer.parseInt(contentLength.get());
                 final var bodyBytes = in.readNBytes(length);
-
                 body = new String(bodyBytes);
             }
         }
 
-        Request request = new Request(method, path, params, headers, body);
+        List<HashMap<String, String>> bodyParams = null;
+        if (checkContentType(headers) && body != null) {
+            bodyParams = parseFormBody(body);
+        }
+
+        Request request = new Request(method, path, queryParams, headers, body, bodyParams);
         log(request);
         return request;
     }
@@ -129,6 +130,22 @@ public class RequestBuilder {
         return -1;
     }
 
+    private static boolean checkContentType(List<String> headers) {
+        return headers.contains("Content-Type: application/x-www-form-urlencoded");
+    }
+
+    private static List<HashMap<String, String>> parseFormBody(String body) {
+        List<HashMap<String, String>> formParams = new ArrayList<>();
+        String[] params = body.split("&");
+        for (String pair : params) {
+            String[] keyAndValue = pair.split("=");
+            HashMap<String, String> pairs = new HashMap<>();
+            pairs.put(keyAndValue[0], keyAndValue[1]);
+            formParams.add(pairs);
+        }
+        return formParams;
+    }
+
     private static void log(Request request) {
         if (request.getPath().equals("/favicon.ico")) {
             return;
@@ -138,11 +155,27 @@ public class RequestBuilder {
 
         System.out.println("Path: " + request.getPath());
 
-        System.out.println("Query Params: " + request.getQueryParams());
+        if (!request.getQueryParams().isEmpty()) {
+            System.out.println("All Query Params: " + request.getQueryParams());
+        }
+
+        if (!request.getQueryParams().isEmpty()) {
+            System.out.println("Query by Name: " + request.getQueryParamsByName("name"));
+        }
 
         System.out.println("Headers: " + request.getHeaders());
 
-        System.out.println("Body: \n" + request.getBody());
+        if (request.getBody() != null) {
+            System.out.println("Body: " + request.getBody());
+        }
+
+        if (request.getPostParams() != null) {
+            System.out.println("All Post Params: " + request.getPostParams());
+        }
+
+        if (request.getPostParams() != null) {
+            System.out.println("Post Param by Name: " + request.getPostParamByName("name"));
+        }
 
         System.out.println();
     }
