@@ -1,5 +1,6 @@
 package request;
 
+import org.apache.commons.fileupload.FileItem;
 import org.apache.http.NameValuePair;
 
 import java.util.ArrayList;
@@ -13,19 +14,38 @@ public class Request {
     private final List<String> headers;
     private final String body;
     private final List<HashMap<String, String>> postParams;
+    private final List<FileItem> parts;
 
-    public Request(String method,
-                   String path,
+    public Request(String method, String path,
                    List<NameValuePair> queryParams,
                    List<String> headers,
                    String body,
-                   List<HashMap<String, String>> postParams) {
+                   List<HashMap<String, String>> postParams,
+                   List<FileItem> parts)
+    {
         this.method = method;
         this.path = path;
         this.queryParams = queryParams;
         this.headers = headers;
         this.body = body;
         this.postParams = postParams;
+        this.parts = parts;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public List<String> getHeaders() {
+        return headers;
+    }
+
+    public String getBody() {
+        return body;
     }
 
     public List<NameValuePair> getQueryParams() {
@@ -50,23 +70,11 @@ public class Request {
         return certainBodyParams;
     }
 
-    public String getMethod() {
-        return method;
-    }
-
-    public String getPath() {
-        return path;
+    public List<FileItem> getParts() {
+        return parts;
     }
 
     public String getKey() {
         return getMethod() + "=" + getPath();
-    }
-
-    public List<String> getHeaders() {
-        return headers;
-    }
-
-    public String getBody() {
-        return body;
     }
 }
