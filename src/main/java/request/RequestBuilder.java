@@ -1,18 +1,10 @@
 package request;
 
 import logger.Logger;
-import org.apache.commons.fileupload.*;
-import org.apache.commons.fileupload.util.Streams;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class RequestBuilder {
@@ -53,14 +45,6 @@ public class RequestBuilder {
             return null;
         }
 
-        final List<NameValuePair> queryParams;
-        try {
-            queryParams = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
-
         // ищем заголовки
         final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
         final var headersStart = requestLineEnd + requestLineDelimiter.length;
@@ -70,9 +54,7 @@ public class RequestBuilder {
             return null;
         }
 
-        // отматываем на начало буфера
         in.reset();
-        // пропускаем requestLine
         in.skip(headersStart);
 
         final var headersBytes = in.readNBytes(headersEnd - headersStart);
@@ -89,21 +71,10 @@ public class RequestBuilder {
             }
         }
 
-        List<HashMap<String, String>> bodyParams = null;
-        if (isUrlencoded(headers) && body != null) {
-            bodyParams = parseFormBody(body);
-        }
-
-        List<FileItem> parts = null;
-        if (isMultipart(headers) && body != null) {
-            try {
-                parts = parseMultipart(body);
-            } catch (FileUploadException exception) {
-                System.out.println("requestBuilder exception: " + exception.getMessage());
-            }
-        }
-
-        Request request = new Request(method, path, queryParams, headers, body, bodyParams, parts);
+        Request request = new Request(method, path, headers, body);
+        request.parseQueryParams();
+        request.parsePostParams();
+        request.parseMultipartParams();
         Logger.logRequest(request);
         return request;
     }
@@ -139,50 +110,5 @@ public class RequestBuilder {
             return i;
         }
         return -1;
-    }
-
-    private static boolean isUrlencoded(List<String> headers) {
-        return headers.contains("Content-Type: application/x-www-form-urlencoded");
-    }
-
-    private static boolean isMultipart(List<String> headers) {
-        return headers.contains("Content-Type: multipart/form-data");
-    }
-
-    private static List<HashMap<String, String>> parseFormBody(String body) {
-        List<HashMap<String, String>> formParams = new ArrayList<>();
-        String[] params = body.split("&");
-        for (String pair : params) {
-            String[] keyAndValue = pair.split("=");
-            HashMap<String, String> pairs = new HashMap<>();
-            pairs.put(keyAndValue[0], keyAndValue[1]);
-            formParams.add(pairs);
-        }
-        return formParams;
-    }
-
-    //todo implement method
-    private static List<FileItem> parseMultipart(String body) throws FileUploadException {
-        RequestFileUpload fileUpload = new RequestFileUpload();
-        try {
-            FileItemIterator iterStream = fileUpload.getItemIterator(this);
-            while (iterStream.hasNext()) {
-                FileItemStream item = iterStream.next();
-                String name = item.getFieldName();
-                InputStream stream = item.openStream();
-                Part part;
-                if (!item.isFormField()) {
-                    byte[] content = stream.readAllBytes();
-                    part = new Part(false, content);
-                } else {
-                    String value = Streams.asString(stream);
-                    part = new Part(true, value);
-                }
-                List<Part> listParts = this.parts.computeIfAbsent(name, k -> new ArrayList<>());
-                listParts.add(part);
-            }
-        } catch (FileUploadException | IOException e) {
-            e.printStackTrace();
-        }
     }
 }

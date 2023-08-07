@@ -25,9 +25,9 @@ public class Logger {
         if (request.getPostParams() != null) {
             System.out.println("Post Param by Name: " + request.getPostParamByName("name"));
         }
-        if (request.getParts() != null) {
-            System.out.println("Parts: " + request.getParts());
-        }
+//        if (request.getParts() != null) {
+//            System.out.println("Parts: " + request.getParts());
+//        }
         System.out.println();
     }
 }
