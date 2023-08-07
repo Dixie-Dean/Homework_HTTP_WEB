@@ -1,15 +1,17 @@
 package request;
 
+import logger.Logger;
+import org.apache.commons.fileupload.*;
+import org.apache.commons.fileupload.util.Streams;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -88,12 +90,21 @@ public class RequestBuilder {
         }
 
         List<HashMap<String, String>> bodyParams = null;
-        if (checkContentType(headers) && body != null) {
+        if (isUrlencoded(headers) && body != null) {
             bodyParams = parseFormBody(body);
         }
 
-        Request request = new Request(method, path, queryParams, headers, body, bodyParams);
-        log(request);
+        List<FileItem> parts = null;
+        if (isMultipart(headers) && body != null) {
+            try {
+                parts = parseMultipart(body);
+            } catch (FileUploadException exception) {
+                System.out.println("requestBuilder exception: " + exception.getMessage());
+            }
+        }
+
+        Request request = new Request(method, path, queryParams, headers, body, bodyParams, parts);
+        Logger.logRequest(request);
         return request;
     }
 
@@ -130,8 +141,12 @@ public class RequestBuilder {
         return -1;
     }
 
-    private static boolean checkContentType(List<String> headers) {
+    private static boolean isUrlencoded(List<String> headers) {
         return headers.contains("Content-Type: application/x-www-form-urlencoded");
+    }
+
+    private static boolean isMultipart(List<String> headers) {
+        return headers.contains("Content-Type: multipart/form-data");
     }
 
     private static List<HashMap<String, String>> parseFormBody(String body) {
@@ -146,37 +161,28 @@ public class RequestBuilder {
         return formParams;
     }
 
-    private static void log(Request request) {
-        if (request.getPath().equals("/favicon.ico")) {
-            return;
+    //todo implement method
+    private static List<FileItem> parseMultipart(String body) throws FileUploadException {
+        RequestFileUpload fileUpload = new RequestFileUpload();
+        try {
+            FileItemIterator iterStream = fileUpload.getItemIterator(this);
+            while (iterStream.hasNext()) {
+                FileItemStream item = iterStream.next();
+                String name = item.getFieldName();
+                InputStream stream = item.openStream();
+                Part part;
+                if (!item.isFormField()) {
+                    byte[] content = stream.readAllBytes();
+                    part = new Part(false, content);
+                } else {
+                    String value = Streams.asString(stream);
+                    part = new Part(true, value);
+                }
+                List<Part> listParts = this.parts.computeIfAbsent(name, k -> new ArrayList<>());
+                listParts.add(part);
+            }
+        } catch (FileUploadException | IOException e) {
+            e.printStackTrace();
         }
-
-        System.out.println("Method: " + request.getMethod());
-
-        System.out.println("Path: " + request.getPath());
-
-        if (!request.getQueryParams().isEmpty()) {
-            System.out.println("All Query Params: " + request.getQueryParams());
-        }
-
-        if (!request.getQueryParams().isEmpty()) {
-            System.out.println("Query by Name: " + request.getQueryParamsByName("name"));
-        }
-
-        System.out.println("Headers: " + request.getHeaders());
-
-        if (request.getBody() != null) {
-            System.out.println("Body: " + request.getBody());
-        }
-
-        if (request.getPostParams() != null) {
-            System.out.println("All Post Params: " + request.getPostParams());
-        }
-
-        if (request.getPostParams() != null) {
-            System.out.println("Post Param by Name: " + request.getPostParamByName("name"));
-        }
-
-        System.out.println();
     }
 }
