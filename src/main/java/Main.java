@@ -72,6 +72,17 @@ public class Main {
             responseStream.flush();
         }));
 
+        server.addHandler("POST", "/postman?name=ella&surname=schonau", ((request, responseStream) -> {
+            responseStream.write(("""
+                    HTTP/1.1 200 OK\r
+                    Content-Length: 0\r
+                    Connection: close\r
+                    \r
+                    """
+            ).getBytes());
+            responseStream.flush();
+        }));
+
         server.launch(9999);
     }
 }
