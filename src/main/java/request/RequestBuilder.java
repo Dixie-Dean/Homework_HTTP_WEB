@@ -75,14 +75,14 @@ public class RequestBuilder {
 
         Request request = new Request(method, path, headers, body, in,
                 contentType.orElse(null), contentLength.orElse(null));
-        request.parseQueryParams();
-        request.parsePostParams();
+//        request.parseQueryParams();
+//        request.parsePostParams();
         request.parseMultipartParams();
         Logger.logRequest(request);
         return request;
     }
 
-    private static Optional<String> extractHeader(List<String> headers, String header) {
+    private synchronized static Optional<String> extractHeader(List<String> headers, String header) {
         return headers.stream()
                 .filter(o -> o.startsWith(header))
                 .map(o -> o.substring(o.indexOf(" ")))
@@ -90,7 +90,7 @@ public class RequestBuilder {
                 .findFirst();
     }
 
-    private static void badRequest(BufferedOutputStream outputStream) throws IOException {
+    private synchronized static void badRequest(BufferedOutputStream outputStream) throws IOException {
         outputStream.write((
                 """
                         HTTP/1.1 400 Bad Request\r
@@ -102,7 +102,7 @@ public class RequestBuilder {
         outputStream.flush();
     }
 
-    private static int indexOf(byte[] array, byte[] target, int start, int max) {
+    private synchronized static int indexOf(byte[] array, byte[] target, int start, int max) {
         outer:
         for (int i = start; i < max - target.length + 1; i++) {
             for (int j = 0; j < target.length; j++) {

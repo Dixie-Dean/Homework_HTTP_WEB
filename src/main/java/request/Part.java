@@ -1,5 +1,7 @@
 package request;
 
+import java.util.Arrays;
+
 public class Part {
     private String value;
     private byte[] data;
@@ -12,11 +14,14 @@ public class Part {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public byte[] getData() {
-        return data;
+    @Override
+    public String toString() {
+        if (value != null) {
+            return value;
+        } else if (data != null) {
+            return Arrays.toString(data);
+        } else {
+            return null + " | " + Arrays.toString((byte[]) null);
+        }
     }
 }

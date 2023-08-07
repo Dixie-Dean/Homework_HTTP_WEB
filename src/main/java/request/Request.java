@@ -1,7 +1,9 @@
 package request;
 
+import multipart.Context;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.util.Streams;
 import org.apache.http.NameValuePair;
@@ -25,7 +27,7 @@ public class Request {
     private final String body;
     private List<NameValuePair> queryParams;
     private List<HashMap<String, String>> postParams;
-    private Map<String, List<Part>> multipartParams;
+    private Map<String, List<Part>> multipartParams = new HashMap<>();
     private final InputStream inputStream;
     private final String contentType;
     private final String contentLength;
@@ -103,8 +105,8 @@ public class Request {
         return multipartParams;
     }
 
-    public Map<String, List<Part>> getMultipartParamByName(String name) {
-        return null;
+    public List<Part> getMultipartParamByName(String name) {
+        return multipartParams.get(name);
     }
 
     private void setQueryParams(List<NameValuePair> queryParams) {
@@ -152,31 +154,26 @@ public class Request {
     }
 
     public void parseMultipartParams() {
-        if (isMultipart(headers) && body != null) {
-            HashMap<String, List<Part>> multipartParams = new HashMap<>();
-            RequestFileUpload fileUpload = new RequestFileUpload();
-            try {
-                FileItemIterator iterStream = fileUpload.getItemIterator(this);
-                while (iterStream.hasNext()) {
-                    FileItemStream item = iterStream.next();
-                    String name = item.getFieldName();
-                    InputStream stream = item.openStream();
-                    Part part;
-                    if (!item.isFormField()) {
-                        byte[] content = stream.readAllBytes();
-                        part = new Part(content);
-                    } else {
-                        String value = Streams.asString(stream);
-                        part = new Part(value);
-                    }
-                    List<Part> params = this.multipartParams.computeIfAbsent(name, k -> new ArrayList<>());
-                    params.add(part);
-                    multipartParams.put(name, params);
-                    setMultipartParams(multipartParams);
+        FileUpload fileUpload = new FileUpload();
+        try {
+            FileItemIterator iterStream = fileUpload.getItemIterator(new Context(body.getBytes(), contentType));
+            while (iterStream.hasNext()) {
+                FileItemStream item = iterStream.next();
+                String name = item.getFieldName();
+                InputStream stream = item.openStream();
+                Part part;
+                if (!item.isFormField()) {
+                    byte[] content = stream.readAllBytes();
+                    part = new Part(content);
+                } else {
+                    String value = Streams.asString(stream);
+                    part = new Part(value);
                 }
-            } catch (FileUploadException | IOException e) {
-                e.printStackTrace();
+                List<Part> listParts = this.multipartParams.computeIfAbsent(name, k -> new ArrayList<>());
+                listParts.add(part);
             }
+        } catch (FileUploadException | IOException exception) {
+            System.out.println(exception.getMessage());
         }
     }
 }
