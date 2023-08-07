@@ -27,24 +27,15 @@ public class Request {
     private final String body;
     private List<NameValuePair> queryParams;
     private List<HashMap<String, String>> postParams;
-    private Map<String, List<Part>> multipartParams = new HashMap<>();
-    private final InputStream inputStream;
+    private final Map<String, List<Part>> multipartParams = new HashMap<>();
     private final String contentType;
-    private final String contentLength;
 
-    public Request(String method, String path,
-                   List<String> headers, String body,
-                   InputStream inputStream,
-                   String contentType,
-                   String contentLength)
-    {
+    public Request(String method, String path, List<String> headers, String body, String contentType) {
         this.method = method;
         this.path = path;
         this.headers = headers;
         this.body = body;
-        this.inputStream = inputStream;
         this.contentType = contentType;
-        this.contentLength = contentLength;
     }
 
     public String getMethod() {
@@ -61,18 +52,6 @@ public class Request {
 
     public String getBody() {
         return body;
-    }
-
-    public InputStream getInputStream() {
-        return inputStream;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public String getContentLength() {
-        return contentLength;
     }
 
     public String getKey() {
@@ -109,71 +88,53 @@ public class Request {
         return multipartParams.get(name);
     }
 
-    private void setQueryParams(List<NameValuePair> queryParams) {
-        this.queryParams = queryParams;
-    }
-
     public void parseQueryParams() {
         final List<NameValuePair> queryParams;
         try {
             queryParams = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
-            setQueryParams(queryParams);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+            this.queryParams = queryParams;
+        } catch (URISyntaxException exception) {
+            exception.printStackTrace();
         }
     }
 
-    private static boolean isUrlencoded(List<String> headers) {
-        return headers.contains("Content-Type: application/x-www-form-urlencoded");
-    }
-
-    private void setPostParams(List<HashMap<String, String>> postParams) {
-        this.postParams = postParams;
-    }
-
     public void parsePostParams() {
-        if (isUrlencoded(headers) && body != null) {
-            List<HashMap<String, String>> formParams = new ArrayList<>();
+        if (contentType != null && contentType.startsWith("application/x-www-form-urlencoded") && body != null) {
+            List<HashMap<String, String>> postParams = new ArrayList<>();
             String[] params = body.split("&");
             for (String pair : params) {
                 String[] keyAndValue = pair.split("=");
                 HashMap<String, String> pairs = new HashMap<>();
                 pairs.put(keyAndValue[0], keyAndValue[1]);
-                formParams.add(pairs);
+                postParams.add(pairs);
             }
-            setPostParams(formParams);
+            this.postParams = postParams;
         }
     }
 
-    private boolean isMultipart(List<String> headers) {
-        return headers.contains("Content-Type: multipart/form-data");
-    }
-
-    private void setMultipartParams(Map<String, List<Part>> multipartParams) {
-        this.multipartParams = multipartParams;
-    }
-
     public void parseMultipartParams() {
-        FileUpload fileUpload = new FileUpload();
-        try {
-            FileItemIterator iterStream = fileUpload.getItemIterator(new Context(body.getBytes(), contentType));
-            while (iterStream.hasNext()) {
-                FileItemStream item = iterStream.next();
-                String name = item.getFieldName();
-                InputStream stream = item.openStream();
-                Part part;
-                if (!item.isFormField()) {
-                    byte[] content = stream.readAllBytes();
-                    part = new Part(content);
-                } else {
-                    String value = Streams.asString(stream);
-                    part = new Part(value);
+        if (contentType != null && contentType.startsWith("multipart/form-data") && body != null) {
+            FileUpload fileUpload = new FileUpload();
+            try {
+                FileItemIterator iterStream = fileUpload.getItemIterator(new Context(body.getBytes(), contentType));
+                while (iterStream.hasNext()) {
+                    FileItemStream item = iterStream.next();
+                    String name = item.getFieldName();
+                    InputStream stream = item.openStream();
+                    Part part;
+                    if (!item.isFormField()) {
+                        byte[] content = stream.readAllBytes();
+                        part = new Part(content);
+                    } else {
+                        String value = Streams.asString(stream);
+                        part = new Part(value);
+                    }
+                    List<Part> listParts = multipartParams.computeIfAbsent(name, k -> new ArrayList<>());
+                    listParts.add(part);
                 }
-                List<Part> listParts = this.multipartParams.computeIfAbsent(name, k -> new ArrayList<>());
-                listParts.add(part);
+            } catch (FileUploadException | IOException exception) {
+                exception.printStackTrace();
             }
-        } catch (FileUploadException | IOException exception) {
-            System.out.println(exception.getMessage());
         }
     }
 }

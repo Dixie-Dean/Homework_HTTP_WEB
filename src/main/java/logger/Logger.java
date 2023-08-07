@@ -9,26 +9,26 @@ public class Logger {
         }
         System.out.println("Method: " + request.getMethod());
         System.out.println("Path: " + request.getPath());
-        if (request.getQueryParams() != null) {
+        System.out.println("Headers: " + request.getHeaders());
+        if (request.getBody() != null && !request.getBody().equals("")) {
+            System.out.println("Body: " + request.getBody());
+        }
+        if (request.getQueryParams() != null && !request.getQueryParams().isEmpty()) {
             System.out.println("All Query Params: " + request.getQueryParams());
         }
-        if (request.getQueryParams() != null) {
+        if (request.getQueryParams() != null && !request.getQueryParams().isEmpty()) {
             System.out.println("Query by Name: " + request.getQueryParamsByName("name"));
         }
-        System.out.println("Headers: " + request.getHeaders());
-//        if (request.getBody() != null) {
-//            System.out.println("Body: " + request.getBody());
-//        }
-        if (request.getPostParams() != null) {
+        if (request.getPostParams() != null && !request.getPostParams().isEmpty()) {
             System.out.println("All Post Params: " + request.getPostParams());
         }
-        if (request.getPostParams() != null) {
+        if (request.getPostParams() != null && !request.getPostParams().isEmpty()) {
             System.out.println("Post Param by Name: " + request.getPostParamByName("name"));
         }
-        if (request.getMultipartParams() != null) {
+        if (request.getMultipartParams() != null && !request.getMultipartParams().isEmpty()) {
             System.out.println("Multipart params: " + request.getMultipartParams());
         }
-        if (request.getMultipartParams() != null) {
+        if (request.getMultipartParams() != null && !request.getMultipartParams().isEmpty()) {
             System.out.println("Multipart param by name: " + request.getMultipartParamByName("name"));
         }
         System.out.println();

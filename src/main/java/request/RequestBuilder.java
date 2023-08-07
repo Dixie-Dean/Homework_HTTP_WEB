@@ -18,7 +18,6 @@ public class RequestBuilder {
         final var buffer = new byte[limit];
         final var read = in.read(buffer);
 
-        // ищем request line
         final var requestLineDelimiter = new byte[]{'\r', '\n'};
         final var requestLineEnd = indexOf(buffer, requestLineDelimiter, 0, read);
         if (requestLineEnd == -1) {
@@ -26,7 +25,6 @@ public class RequestBuilder {
             return null;
         }
 
-        // читаем request line
         final var requestLine = new String(Arrays.copyOf(buffer, requestLineEnd)).split(" ");
         if (requestLine.length != 3) {
             badRequest(out);
@@ -45,7 +43,6 @@ public class RequestBuilder {
             return null;
         }
 
-        // ищем заголовки
         final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
         final var headersStart = requestLineEnd + requestLineDelimiter.length;
         final var headersEnd = indexOf(buffer, headersDelimiter, headersStart, read);
@@ -65,7 +62,6 @@ public class RequestBuilder {
         String body = null;
         if (!method.equals("GET")) {
             in.skip(headersDelimiter.length);
-//            final var contentLength = extractHeader(headers, "Content-Length");
             if (contentLength.isPresent()) {
                 final var length = Integer.parseInt(contentLength.get());
                 final var bodyBytes = in.readNBytes(length);
@@ -73,10 +69,9 @@ public class RequestBuilder {
             }
         }
 
-        Request request = new Request(method, path, headers, body, in,
-                contentType.orElse(null), contentLength.orElse(null));
-//        request.parseQueryParams();
-//        request.parsePostParams();
+        Request request = new Request(method, path, headers, body, contentType.orElse(null));
+        request.parseQueryParams();
+        request.parsePostParams();
         request.parseMultipartParams();
         Logger.logRequest(request);
         return request;
