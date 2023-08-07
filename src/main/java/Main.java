@@ -23,7 +23,6 @@ public class Main {
             Files.copy(filePath, responseStream);
             responseStream.flush();
         };
-
         server.addHandler("GET", "/app.js", defaultHandler);
         server.addHandler("GET", "/events.html", defaultHandler);
         server.addHandler("GET", "/events.js", defaultHandler);
@@ -33,7 +32,6 @@ public class Main {
         server.addHandler("GET", "/spring.png", defaultHandler);
         server.addHandler("GET", "/spring.svg", defaultHandler);
         server.addHandler("GET", "/styles.css", defaultHandler);
-
         server.addHandler("GET", "/classic.html", (request, responseStream) -> {
             final var filePath = Path.of(".", "public", request.getPath());
             final var mimeType = Files.probeContentType(filePath);
@@ -50,47 +48,27 @@ public class Main {
             responseStream.flush();
         });
 
-        server.addHandler("GET", "/default-get.html", ((request, responseStream) -> {
-            final var filePath = Path.of(".", "static", request.getPath());
-            final var mimeType = Files.probeContentType(filePath);
-            final var length = Files.size(filePath);
-            responseStream.write(("HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: " + mimeType + "\r\n" +
-                    "Content-Length: " + length + "\r\n" +
-                    "Connection: close\r\n" +
-                    "\r\n"
+
+        server.addHandler("GET", "/postman", ((request, responseStream) -> {
+            responseStream.write((
+                    """
+                            HTTP/1.1 200 OK\r
+                            Content-Length: 0\r
+                            Connection: close\r
+                            \r
+                            """
             ).getBytes());
-            Files.copy(filePath, responseStream);
             responseStream.flush();
         }));
 
-        server.addHandler("POST", "/default-get.html", ((request, responseStream) -> {
-            final var filePath = Path.of(".", "static", request.getPath());
-            final var mimeType = Files.probeContentType(filePath);
-            final var length = Files.size(filePath);
-            responseStream.write(("HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: " + mimeType + "\r\n" +
-                    "Content-Length: " + length + "\r\n" +
-                    "Connection: close\r\n" +
-                    "\r\n" +
-                    request.getBody()
+        server.addHandler("POST", "/postman", ((request, responseStream) -> {
+            responseStream.write(("""
+                    HTTP/1.1 200 OK\r
+                    Content-Length: 0\r
+                    Connection: close\r
+                    \r
+                    """
             ).getBytes());
-            Files.copy(filePath, responseStream);
-            responseStream.flush();
-        }));
-
-        server.addHandler("POST", "/default-get.html?value1=field1", ((request, responseStream) -> {
-            final var filePath = Path.of(".", "static", request.getPath());
-            final var mimeType = Files.probeContentType(filePath);
-            final var length = Files.size(filePath);
-            responseStream.write(("HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: " + mimeType + "\r\n" +
-                    "Content-Length: " + length + "\r\n" +
-                    "Connection: close\r\n" +
-                    "\r\n" +
-                    request.getBody()
-            ).getBytes());
-            Files.copy(filePath, responseStream);
             responseStream.flush();
         }));
 

@@ -2,31 +2,52 @@ package request;
 
 import org.apache.http.NameValuePair;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Request {
     private final String method;
     private String path;
+    private final List<NameValuePair> queryParams;
     private final List<String> headers;
     private final String body;
-    private final List<NameValuePair> params;
+    private final List<HashMap<String, String>> postParams;
 
-    public Request(String method, String path, List<NameValuePair> params, List<String> headers, String body) {
+    public Request(String method,
+                   String path,
+                   List<NameValuePair> queryParams,
+                   List<String> headers,
+                   String body,
+                   List<HashMap<String, String>> postParams) {
         this.method = method;
         this.path = path;
-        this.params = params;
+        this.queryParams = queryParams;
         this.headers = headers;
         this.body = body;
+        this.postParams = postParams;
     }
 
     public List<NameValuePair> getQueryParams() {
-        return params;
+        return queryParams;
     }
 
     public List<NameValuePair> getQueryParamsByName(String name) {
-        return params.stream().filter(pair -> pair.getName().equals(name)).toList();
+        return queryParams.stream().filter(pair -> pair.getName().equals(name)).toList();
+    }
+
+    public List<HashMap<String, String>> getPostParams() {
+        return postParams;
+    }
+
+    public List<HashMap<String, String>> getPostParamByName(String name) {
+        List<HashMap<String, String>> certainBodyParams = new ArrayList<>();
+        for (HashMap<String, String> param : postParams) {
+            if (param.containsKey(name)) {
+                certainBodyParams.add(param);
+            }
+        }
+        return certainBodyParams;
     }
 
     public String getMethod() {
@@ -34,14 +55,7 @@ public class Request {
     }
 
     public String getPath() {
-        if (path.contains("?")) {
-            String pathWithoutParams = path.substring(0, path.indexOf('?'));
-            String paramsToEncode = path.substring(path.lastIndexOf('?'));
-            URLEncoder.encode(paramsToEncode, StandardCharsets.UTF_8);
-            return pathWithoutParams + paramsToEncode;
-        } else {
-            return path;
-        }
+        return path;
     }
 
     public String getKey() {
