@@ -59,11 +59,13 @@ public class RequestBuilder {
 
         final var headersBytes = in.readNBytes(headersEnd - headersStart);
         final var headers = Arrays.asList(new String(headersBytes).split("\r\n"));
+        Optional<String> contentType = extractHeader(headers, "Content-Type");
+        Optional<String> contentLength = extractHeader(headers, "Content-Length");
 
         String body = null;
         if (!method.equals("GET")) {
             in.skip(headersDelimiter.length);
-            final var contentLength = extractHeader(headers, "Content-Length");
+//            final var contentLength = extractHeader(headers, "Content-Length");
             if (contentLength.isPresent()) {
                 final var length = Integer.parseInt(contentLength.get());
                 final var bodyBytes = in.readNBytes(length);
@@ -71,7 +73,8 @@ public class RequestBuilder {
             }
         }
 
-        Request request = new Request(method, path, headers, body);
+        Request request = new Request(method, path, headers, body, in,
+                contentType.orElse(null), contentLength.orElse(null));
         request.parseQueryParams();
         request.parsePostParams();
         request.parseMultipartParams();

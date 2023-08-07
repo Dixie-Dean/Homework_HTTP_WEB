@@ -2,33 +2,46 @@ package request;
 
 import org.apache.commons.fileupload.UploadContext;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class Context implements UploadContext {
+    private final Request request;
+
+    public Context(Request request) {
+        this.request = request;
+    }
 
     @Override
     public long contentLength() {
-        return 0;
+        return Long.parseLong(request.getContentLength());
     }
 
     @Override
     public String getCharacterEncoding() {
-        return null;
+        if(request.getContentType() == null) {
+            return null;
+        } else {
+            return Arrays.stream(request.getContentType().split(";"))
+                    .filter(o -> o.startsWith("charset"))
+                    .map(o -> o.substring(o.indexOf("=")))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     @Override
     public String getContentType() {
-        return null;
+        return request.getContentType();
+    }
+
+    @Override
+    public InputStream getInputStream() {
+        return request.getInputStream();
     }
 
     @Override
     public int getContentLength() {
-        return 0;
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return null;
+        return Integer.parseInt(request.getContentLength());
     }
 }
